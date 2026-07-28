@@ -1,0 +1,38 @@
+using MetricsServer.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// 1. gRPC Servislerini DI Container'a Ekle
+builder.Services.AddGrpc();
+
+// 2. Angular (Tarayıcı) Erişimi İçin CORS Yapılandırması
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .WithExposedHeaders("Grpc-Status", "Grpc-Message", "Grpc-Encoding", "Grpc-Accept-Encoding", "X-Grpc-Web", "X-User-Agent");
+    });
+});
+
+var app = builder.Build();
+
+// 3. Pipeline Sıralaması
+app.UseRouting();
+
+// CORS middleware'i Routing'den sonra, Endpoint Map'ten önce gelmelidir
+app.UseCors("AllowAll");
+
+// gRPC-Web Desteğini Aktif Et (Varsayılan olarak etkinleştirir)
+app.UseGrpcWeb(new GrpcWebOptions { DefaultEnabled = true });
+
+// 4. Servis Eşleme (gRPC-Web ve CORS politikasını servise uygula)
+app.MapGrpcService<MetricsService>()
+   .EnableGrpcWeb()
+   .RequireCors("AllowAll");
+
+app.MapGet("/", () => "gRPC Metrics Server çalışıyor! (gRPC-Web Aktif)");
+
+app.Run();

@@ -1,0 +1,57 @@
+using System.Diagnostics;
+using System.Management; // Gerekirse GC için
+using Grpc.Core;
+
+namespace MetricsServer.Services;
+
+public class MetricsService : MetricsStreamer.MetricsStreamerBase
+{
+    public override async Task StreamMetrics(
+        EmptyRequest request,
+        IServerStreamWriter<MetricResponse> responseStream,
+        ServerCallContext context)
+    {
+        // 1. Tüm sistemin CPU kullanımını okuyan sayaç
+        using var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+        
+        // 2. Sistemde kalan boş RAM'i (MB cinsinden) okuyan sayaç
+        using var ramCounter = new PerformanceCounter("Memory", "Available MBytes");
+
+        // Toplam RAM miktarını alıyoruz (Örn: 16384 MB veya 32768 MB)
+        var totalMemoryInMB = GetTotalPhysicalMemoryInMB();
+
+        // İlk okumada PerformanceCounter her zaman 0 döner, ilk çağrıyı yaparak sayacı ısıtıyoruz.
+        cpuCounter.NextValue();
+
+        while (!context.CancellationToken.IsCancellationRequested)
+        {
+            await Task.Delay(1000); // Sayaçların doğru değer hesaplayabilmesi için 1 sn bekleme
+
+            // --- Tüm Sistem CPU Hesabı ---
+            int totalCpuUsage = (int)Math.Round(cpuCounter.NextValue());
+
+            // --- Tüm Sistem RAM Hesabı ---
+            float availableRamMB = ramCounter.NextValue();
+            int usedRamMB = (int)(totalMemoryInMB - availableRamMB);
+
+            // Response oluştur
+            var metric = new MetricResponse
+            {
+                CpuUsage = Math.Clamp(totalCpuUsage, 0, 100),
+                MemoryUsage = usedRamMB, // Task Manager'da gördüğünüz Kullanılan RAM (MB)
+                Timestamp = DateTime.Now.ToString("HH:mm:ss")
+            };
+
+            await responseStream.WriteAsync(metric);
+        }
+    }
+
+    // Bilgisayarınızın Toplam RAM kapasitesini (MB) hesaplar
+    private static double GetTotalPhysicalMemoryInMB()
+    {
+        // Windows bellek bilgisini GC/Environment üzerinden MB cinsinden alma
+        var gcInfo = GC.GetGCMemoryInfo();
+        double totalBytes = gcInfo.TotalAvailableMemoryBytes;
+        return totalBytes / (1024 * 1024);
+    }
+}

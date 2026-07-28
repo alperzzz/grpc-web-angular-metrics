@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option csharp_namespace = "MetricsServer";
+
+package metrics;
+
+service MetricsStreamer {
+  // Server Streaming metodu
+  rpc StreamMetrics (EmptyRequest) returns (stream MetricResponse);
+}
+
+message EmptyRequest {}
+
+message MetricResponse {
+  int32 cpu_usage = 1;
+  int32 memory_usage = 2;
+  string timestamp = 3;
+}
