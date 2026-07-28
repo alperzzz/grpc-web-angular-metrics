@@ -120,7 +120,7 @@ dotnet restore
 
 dotnet run
 
-
+```
 
 The gRPC-Web server will start listening on http://localhost:5270.
 
@@ -131,20 +131,11 @@ The gRPC-Web server will start listening on http://localhost:5270.
 
 
 \# Navigate to the client folder
-
+```bash
 cd MetricsClient
-
-
-
-\# Install npm packages
-
 npm install
-
-
-
-\# Start the Angular development server
-
 ng serve
+```
 
 
 
@@ -153,39 +144,23 @@ Open your browser and navigate to http://localhost:4200.
 
 
 📄 Protocol Buffer Contract (metrics.proto)
-
-
-
+```
 syntax = "proto3";
-
-
 
 package metrics;
 
-
-
 service MetricsStreamer {
-
-&#x20; rpc StreamMetrics (EmptyRequest) returns (stream MetricResponse);
-
+  rpc StreamMetrics (EmptyRequest) returns (stream MetricResponse);
 }
-
-
 
 message EmptyRequest {}
 
-
-
 message MetricResponse {
-
-&#x20; int32 cpu\_usage = 1;
-
-&#x20; int32 memory\_usage = 2;
-
-&#x20; string timestamp = 3;
-
+  int32 cpu_usage = 1;
+  int32 memory_usage = 2;
+  string timestamp = 3;
 }
-
+```
 
 
 📝 Key Takeaways \& Fixes Implemented
