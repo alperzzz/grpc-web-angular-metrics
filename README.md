@@ -1,150 +1,60 @@
-\# 🚀 Live System Metrics Dashboard (gRPC-Web \& Angular 19)
+# Live System Metrics Dashboard
 
+Real-time system monitoring dashboard built with **Angular 22**, **.NET 9**, and **gRPC-Web**. It streams CPU and RAM telemetry from the server to the browser using server-streaming RPC.
 
+## Architecture
 
-Real-time system monitoring dashboard built with \*\*Angular 19\*\*, \*\*.NET 9\*\*, and \*\*gRPC-Web\*\*. Demonstrates high-performance \*\*Server Streaming RPC\*\* for streaming live server telemetry (CPU/RAM usage) directly to a modern web application without WebSocket overhead.
-
-
-
-\---
-
-
-
-\## 🏗️ Architecture Overview
-
-
-
-┌─────────────────────────┐               ┌─────────────────────────┐
-
-│   Angular Frontend      │  HTTP/2 POST  │    .NET 9 Backend       │
-
-│                         │──────────────►│                         │
-
-│   (MetricsService)      │  gRPC-Web     │   (MetricsService.cs)   │
-
-│                         │◄──────────────│                         │
-
-│                         │ Server-Stream │                         │
-
-└─────────────────────────┘  (Protobuf)   └─────────────────────────┘
-
-
-
-\- \*\*Protocol Buffers (Protobuf):\*\* Strongly-typed contract definition for `EmptyRequest` and `MetricResponse`.
-
-\- \*\*gRPC-Web Transpilation:\*\* Generated client artifacts (`\*\_pb.js` \& `\*ServiceClientPb.ts`) bridging browser limitations for native gRPC streaming.
-
-\- \*\*Vite \& esbuild Compatibility:\*\* ESM module resolution and runtime shim configuration for Proto classes in Angular 19.
-
-\- \*\*CORS \& Preflight Handling:\*\* Configured `WithExposedHeaders` for gRPC status headers (`Grpc-Status`, `Grpc-Message`, `X-Grpc-Web`).
-
-
-
-\---
-
-
-
-\## ✨ Features
-
-
-
-\- ⚡ \*\*Real-Time Data Streaming:\*\* Low-latency continuous binary stream via gRPC Server Streaming.
-
-\- 🎨 \*\*Reactive Dashboard UI:\*\* Live visual indicators and progress bars for CPU and RAM consumption.
-
-\- 🔄 \*\*Automatic Change Detection:\*\* Instant UI updates powered by Angular RxJS pipelines and `ChangeDetectorRef`.
-
-\- 🔐 \*\*Cross-Origin Streaming:\*\* Full CORS preflight middleware setup for smooth browser-to-server communication.
-
-
-
-\---
-
-
-
-\## 🛠️ Tech Stack
-
-
-
-\- \*\*Frontend:\*\* Angular 19, TypeScript, RxJS, `grpc-web`, `google-protobuf`
-
-\- \*\*Backend:\*\* .NET 9 Web API, `Grpc.AspNetCore`, `Grpc.AspNetCore.Web`
-
-\- \*\*Protocol:\*\* gRPC-Web (Server Streaming), Protocol Buffers v3
-
-
-
-\---
-
-
-
-\## 🚀 Getting Started
-
-
-
-\### Prerequisites
-
-
-
-\- \[Node.js](https://nodejs.org/) (v18 or higher)
-
-\- \[.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-
-\- Angular CLI (`npm i -g @angular/cli`)
-
-
-
-\---
-
-
-
-\### 1. Backend Setup (.NET 9)
-
-
-
-```bash
-
-\# Navigate to the server folder
-
-cd MetricsServer
-
-
-
-\# Restore dependencies
-
-dotnet restore
-
-
-
-\# Run the gRPC server
-
-dotnet run
-
+```text
+Angular frontend (MetricsService)  -- gRPC-Web -->  .NET 9 backend (MetricsService)
+                                  <-- server stream --
 ```
 
-The gRPC-Web server will start listening on http://localhost:5270.
+- **Protocol Buffers:** Strongly typed `EmptyRequest` and `MetricResponse` contract.
+- **gRPC-Web:** Generated browser client artifacts bridge browser and gRPC transport requirements.
+- **CORS:** The backend exposes the gRPC response headers required by the browser client.
 
+## Features
 
+- Live CPU and RAM updates every second.
+- Reactive Angular dashboard with CPU and RAM progress bars.
+- gRPC server-streaming transport over gRPC-Web.
 
-2\. Frontend Setup (Angular)
+## Technology stack
 
+- **Frontend:** Angular 22, TypeScript, RxJS, `grpc-web`, `google-protobuf`
+- **Backend:** .NET 9, `Grpc.AspNetCore`, `Grpc.AspNetCore.Web`
+- **Protocol:** Protocol Buffers v3 and gRPC-Web server streaming
 
+## Prerequisites
 
-\# Navigate to the client folder
+- [Node.js](https://nodejs.org/) 18 or later
+- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+
+## Run the application
+
+### 1. Start the backend
+
+```bash
+cd MetricsServer
+dotnet restore
+dotnet run
+```
+
+The gRPC-Web server listens on `http://localhost:5270`.
+
+### 2. Start the frontend
+
 ```bash
 cd MetricsClient
 npm install
-ng serve
+npm start
 ```
 
+Open `http://localhost:4200` in a browser.
 
+## Protocol Buffer contract
 
-Open your browser and navigate to http://localhost:4200.
-
-
-
-📄 Protocol Buffer Contract (metrics.proto)
-```
+```proto
 syntax = "proto3";
 
 package metrics;
@@ -161,19 +71,3 @@ message MetricResponse {
   string timestamp = 3;
 }
 ```
-
-
-📝 Key Takeaways \& Fixes Implemented
-
-Resolved ES Module bundling issues (import \* as jspb vs CommonJS require).
-
-
-
-Patched gRPC-Web preflight OPTIONS CORS handshakes in ASP.NET Core middleware.
-
-
-
-Implemented toObject() fallback for safe Protobuf DTO deserialization in Angular.
-
-
-

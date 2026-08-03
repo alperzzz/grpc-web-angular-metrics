@@ -13,6 +13,7 @@ import { MetricsService } from './metrics.service';
 export class App implements OnInit, OnDestroy {
   public lastMetric: any = null;
   public errorMessage: string = '';
+  public isDarkTheme = false;
   private sub!: Subscription;
 
   constructor(
@@ -45,5 +46,9 @@ export class App implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.sub?.unsubscribe();
+  }
+
+  toggleTheme() {
+    this.isDarkTheme = !this.isDarkTheme;
   }
 }
